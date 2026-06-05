@@ -1,6 +1,6 @@
 #!.venv/bin/python3
 
-import random, hashlib
+import random, hashlib, ecdsa
 from base58 import b58encode, b58decode_check
 
 def base58check(payload:bytes) -> str:
@@ -34,6 +34,15 @@ def import_private_key(file:str) -> bytes:
     raise ValueError("Compressed WIF required")
 
   return private_key 
+
+
+def generate_public_key(priv_key: bytes) -> bytes:
+  # K = k × G
+  k = int.from_bytes(priv_key, 'big')
+  K = ecdsa.SECP256k1.generator * k
+  prefix = b'\x02' if K.y() % 2 == 0 else b'\x03'
+
+  return prefix + K.x().to_bytes(32, 'big')
 
 if __name__ == "__main__":
   private_key1 = import_private_key(".private_key1")
